@@ -1,0 +1,7 @@
+LIBRARY StrikeEQ.Apo
+EXPORTS
+    DllCanUnloadNow          PRIVATE
+    DllGetClassObject        PRIVATE
+    DllRegisterServer        PRIVATE
+    DllUnregisterServer      PRIVATE
+    StrikeEqApo_SelfTestProcess

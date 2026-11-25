@@ -1,0 +1,17 @@
+# .NET & C++ build outputs
+bin/
+obj/
+publish/
+*.zip
+*.user
+*.suo
+*.cache
+
+# Visual Studio / Rider / VS Code local
+.vs/
+.idea/
+
+# Runtime / temporary logs
+*.log
+*.bak
+publish/debug_trace.log
