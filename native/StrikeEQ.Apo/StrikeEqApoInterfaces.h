@@ -17,7 +17,7 @@ static const CLSID CLSID_StrikeEqApo = {
 };
 
 static const wchar_t* STRIKEEQ_APO_CLSID_STR = L"{7A94E2C1-5F83-4D62-9B18-3C4A7E2D8F01}";
-static const wchar_t* STRIKEEQ_SHM_FILE_PATH = L"C:\\ProgramData\\StrikeEQ\\apo_state.bin";
+static const wchar_t* STRIKEEQ_SHM_FILE_PATH = L"C:\\ProgramData\\FootStepEQ\\apo_state.bin";
 
 // ============================================================================
 // Official Windows Core Audio APO IIDs (exact Microsoft SDK GUIDs)

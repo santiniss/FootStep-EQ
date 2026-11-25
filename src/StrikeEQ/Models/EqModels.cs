@@ -100,6 +100,6 @@ public sealed class AppSettings
     public string ActiveProfileId { get; set; } = "cs2-precision";
     public string FallbackProfileId { get; set; } = "flat-studio";
     public int BufferMs { get; set; } = 12;
-    public string GitHubRepo { get; set; } = string.Empty;
+    public string GitHubRepo { get; set; } = "santiniss/FootStep-EQ";
     public List<EqProfile> CustomProfiles { get; set; } = new();
 }

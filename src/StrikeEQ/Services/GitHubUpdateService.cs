@@ -21,7 +21,7 @@ public sealed class GitHubUpdateService
 {
     private static readonly HttpClient Http = CreateClient();
 
-    public string RepositorySlug { get; set; } = string.Empty; // e.g. "usuario/StrikeEQ"
+    public string RepositorySlug { get; set; } = "santiniss/FootStep-EQ";
 
     public static string CurrentVersion
     {
@@ -35,7 +35,7 @@ public sealed class GitHubUpdateService
     private static HttpClient CreateClient()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("StrikeEQ", "1.0"));
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FootStepEQ", "1.0"));
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         return client;
     }
@@ -46,7 +46,7 @@ public sealed class GitHubUpdateService
         if (string.IsNullOrWhiteSpace(RepositorySlug) || !RepositorySlug.Contains('/'))
         {
             return new UpdateCheckResult(false, false, current, current, null,
-                "Repositório GitHub ainda não configurado (ex.: usuario/StrikeEQ).");
+                "Repositório GitHub ainda não configurado (ex.: santiniss/FootStep-EQ).");
         }
 
         try
@@ -77,7 +77,7 @@ public sealed class GitHubUpdateService
 
             string msg = newer
                 ? $"Nova versão disponível: v{cleanLatest} (atual: v{current})!"
-                : $"StrikeEQ já está atualizado (v{current}).";
+                : $"FootStep EQ já está atualizado (v{current}).";
 
             return new UpdateCheckResult(true, newer, current, cleanLatest, htmlUrl, msg);
         }

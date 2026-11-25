@@ -402,7 +402,7 @@ public partial class MainWindow : Window
             TxtAudioPageStatusTitle.Foreground = new SolidColorBrush(Color.FromRgb(255, 92, 112));
             TxtAudioPageStatusDesc.Text = _dspChain.Bypass
                 ? "O equalizador está desligado no momento (pressione Ctrl+Alt+B ou clique em 'Ligado' no menu)."
-                : "Todo áudio de jogos e do Windows neste fone já passa pelo StrikeEQ sem atraso.";
+                : "Todo áudio de jogos e do Windows neste fone já passa pelo FootStep EQ sem atraso.";
         }
         else
         {
@@ -596,7 +596,7 @@ public partial class MainWindow : Window
     private void OnSaveProfilesClick(object sender, RoutedEventArgs e)
     {
         PersistSettings();
-        System.Windows.MessageBox.Show("Perfis e configurações salvos com sucesso!", "StrikeEQ", MessageBoxButton.OK, MessageBoxImage.Information);
+        System.Windows.MessageBox.Show("Perfis e configurações salvos com sucesso!", "FootStep EQ", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void OnActivateHeadsetClick(object sender, RoutedEventArgs e)
@@ -604,15 +604,15 @@ public partial class MainWindow : Window
         string? renderId = _settings.RenderDeviceId;
         if (string.IsNullOrWhiteSpace(renderId))
         {
-            System.Windows.MessageBox.Show("Selecione primeiro o seu fone de ouvido na lista acima.", "StrikeEQ", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show("Selecione primeiro o seu fone de ouvido na lista acima.", "FootStep EQ", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         if (NativeApoInstallerService.LocateSourceDll() is null)
         {
             System.Windows.MessageBox.Show(
-                "O arquivo StrikeEQ.Apo.dll não foi encontrado na pasta do StrikeEQ.\nMantenha os dois arquivos juntos na mesma pasta.",
-                "StrikeEQ",
+                "O arquivo FootStepEQ.Apo.dll não foi encontrado na pasta do FootStep EQ.\nMantenha os dois arquivos juntos na mesma pasta.",
+                "FootStep EQ",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             return;
@@ -623,9 +623,9 @@ public partial class MainWindow : Window
 
         var confirm = System.Windows.MessageBox.Show(
             isInstalled
-                ? $"Desativar o StrikeEQ em:\n\n  {deviceName}\n\nO som original do Windows será restaurado (pausa rápida de 2 segundos). Continuar?"
-                : $"Ativar o StrikeEQ diretamente no seu fone:\n\n  {deviceName}\n\n• Funciona em qualquer jogo (CS2, Valorant, Warzone, Apex...)\n• Sem atraso no áudio e sem programas extras\n• O som do Windows vai pausar por 2 segundos para ativar\n\nContinuar?",
-            isInstalled ? "Desativar no Fone" : "Ativar StrikeEQ no Fone",
+                ? $"Desativar o FootStep EQ em:\n\n  {deviceName}\n\nO som original do Windows será restaurado (pausa rápida de 2 segundos). Continuar?"
+                : $"Ativar o FootStep EQ diretamente no seu fone:\n\n  {deviceName}\n\n• Funciona em qualquer jogo (CS2, Valorant, Warzone, Apex...)\n• Sem atraso no áudio e sem programas extras\n• O som do Windows vai pausar por 2 segundos para ativar\n\nContinuar?",
+            isInstalled ? "Desativar no Fone" : "Ativar FootStep EQ no Fone",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
 
@@ -647,10 +647,10 @@ public partial class MainWindow : Window
         UpdateHeadsetActivationUi();
 
         string friendlyMsg = ok
-            ? (isInstalled ? "StrikeEQ desativado neste fone." : "Pronto! O StrikeEQ agora está ativo no seu fone.")
+            ? (isInstalled ? "FootStep EQ desativado neste fone." : "Pronto! O FootStep EQ agora está ativo no seu fone.")
             : msg;
 
-        System.Windows.MessageBox.Show(friendlyMsg, "StrikeEQ", MessageBoxButton.OK, ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        System.Windows.MessageBox.Show(friendlyMsg, "FootStep EQ", MessageBoxButton.OK, ok ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
 
     private void OnRefreshDevicesClick(object sender, RoutedEventArgs e)
@@ -700,7 +700,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                System.Windows.MessageBox.Show($"Não foi possível abrir o arquivo: {err}", "StrikeEQ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show($"Não foi possível abrir o arquivo: {err}", "FootStep EQ", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }
@@ -737,7 +737,7 @@ public partial class MainWindow : Window
             {
                 var open = System.Windows.MessageBox.Show(
                     $"{res.Message}\n\nDeseja abrir a página de download no GitHub agora?",
-                    "Nova Versão — StrikeEQ",
+                    "Nova Versão — FootStep EQ",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
                 if (open == MessageBoxResult.Yes)
@@ -761,7 +761,7 @@ public partial class MainWindow : Window
             if (_activeProfile.Id != matchedProfile.Id)
             {
                 SelectProfileById(matchedProfile.Id);
-                _trayService?.ShowNotification("StrikeEQ", $"Jogo detectado → {matchedProfile.Name}");
+                _trayService?.ShowNotification("FootStep EQ", $"Jogo detectado → {matchedProfile.Name}");
             }
         });
     }
@@ -830,7 +830,7 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
-            _trayService?.ShowNotification("StrikeEQ em segundo plano", "Rodando na bandeja. Use Ctrl+Alt+B para ligar/desligar.");
+            _trayService?.ShowNotification("FootStep EQ em segundo plano", "Rodando na bandeja. Use Ctrl+Alt+B para ligar/desligar.");
             return;
         }
         Cleanup();

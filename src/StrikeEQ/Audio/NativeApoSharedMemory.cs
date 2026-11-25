@@ -92,7 +92,7 @@ public sealed record NativeApoTelemetry(
 public sealed class NativeApoSharedMemory : IDisposable
 {
     public static readonly string SharedDirectory =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "StrikeEQ");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "FootStepEQ");
 
     public static readonly string SharedFilePath = Path.Combine(SharedDirectory, "apo_state.bin");
 

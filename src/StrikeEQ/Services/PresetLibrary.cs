@@ -16,7 +16,7 @@ public static class PresetLibrary
     };
 
     public static string SettingsDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StrikeEQ");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FootStepEQ");
 
     public static string SettingsFilePath => Path.Combine(SettingsDirectory, "settings.json");
 

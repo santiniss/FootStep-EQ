@@ -8,10 +8,10 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>StrikeEQ</AssemblyName>
+    <AssemblyName>FootStepEQ</AssemblyName>
     <RootNamespace>StrikeEQ</RootNamespace>
     <Version>1.0.0</Version>
-    <Product>StrikeEQ — Competitive Gaming Audio Equalizer</Product>
+    <Product>FootStep EQ — Equalizador Gamer</Product>
   </PropertyGroup>
 
   <ItemGroup>

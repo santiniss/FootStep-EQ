@@ -205,10 +205,10 @@ RunTest("NativeApoSharedState binary struct size matches C++ ABI (280 bytes)", (
     AssertTrue(totalSize == 280, $"Expected NativeApoSharedState=280 bytes, got {totalSize}");
 });
 
-// 10. Native StrikeEQ.Apo.dll COM Factory + DSP Parity Verification
-RunTest("Native StrikeEQ.Apo.dll loads, creates COM APO, and matches C# DSP parity", () =>
+// 10. Native FootStepEQ.Apo.dll COM Factory + DSP Parity Verification
+RunTest("Native FootStepEQ.Apo.dll loads, creates COM APO, and matches C# DSP parity", () =>
 {
-    string dllPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "publish", "StrikeEQ.Apo.dll"));
+    string dllPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "publish", "FootStepEQ.Apo.dll"));
     AssertTrue(File.Exists(dllPath), $"Compiled native APO DLL not found at {dllPath}");
 
     IntPtr lib = NativeLibrary.Load(dllPath);

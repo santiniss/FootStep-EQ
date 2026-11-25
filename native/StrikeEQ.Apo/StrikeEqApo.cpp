@@ -106,8 +106,8 @@ public:
             APO_FLAG_FRAMESPERSECOND_MUST_MATCH |
             APO_FLAG_BITSPERSAMPLE_MUST_MATCH);
 
-        wcscpy_s(props->szFriendlyName, 256, L"StrikeEQ Competitive Audio APO");
-        wcscpy_s(props->szCopyrightInfo, 256, L"StrikeEQ Competitive DSP");
+        wcscpy_s(props->szFriendlyName, 256, L"FootStep EQ Audio APO");
+        wcscpy_s(props->szCopyrightInfo, 256, L"FootStep EQ Gaming Audio");
         props->u32MajorVersion = 1;
         props->u32MinorVersion = 0;
         props->u32MinInputConnections = 1;
@@ -475,7 +475,7 @@ extern "C" HRESULT __stdcall DllRegisterServer() {
     // 1. Register COM CLSID InprocServer32
     wchar_t clsidKey[160];
     swprintf_s(clsidKey, 160, L"CLSID\\%s", STRIKEEQ_APO_CLSID_STR);
-    HRESULT hr = WriteRegString(HKEY_CLASSES_ROOT, clsidKey, nullptr, L"StrikeEQ Competitive Audio APO");
+    HRESULT hr = WriteRegString(HKEY_CLASSES_ROOT, clsidKey, nullptr, L"FootStep EQ Audio APO");
     if (FAILED(hr)) return hr;
 
     wchar_t inprocKey[192];
@@ -488,8 +488,8 @@ extern "C" HRESULT __stdcall DllRegisterServer() {
     // 2. Register in Windows AudioEngine AudioProcessingObjects registry
     wchar_t apoKey[256];
     swprintf_s(apoKey, 256, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio\\AudioEngine\\AudioProcessingObjects\\%s", STRIKEEQ_APO_CLSID_STR);
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"FriendlyName", L"StrikeEQ Competitive Audio APO");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"Copyright", L"StrikeEQ Competitive DSP");
+    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"FriendlyName", L"FootStep EQ Audio APO");
+    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"Copyright", L"FootStep EQ Gaming Audio");
     WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MajorVersion", 1);
     WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MinorVersion", 0);
     WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"Flags",

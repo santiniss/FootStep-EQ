@@ -1,4 +1,4 @@
-LIBRARY StrikeEQ.Apo
+LIBRARY FootStepEQ.Apo
 EXPORTS
     DllCanUnloadNow          PRIVATE
     DllGetClassObject        PRIVATE

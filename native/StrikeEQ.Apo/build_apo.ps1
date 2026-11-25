@@ -1,5 +1,5 @@
 param(
-    [string]$OutputPath = "..\..\publish\StrikeEQ.Apo.dll"
+    [string]$OutputPath = "..\..\publish\FootStepEQ.Apo.dll"
 )
 
 $ErrorActionPreference = "Stop"

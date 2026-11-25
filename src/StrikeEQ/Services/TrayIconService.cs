@@ -33,7 +33,7 @@ public sealed class TrayIconService : IDisposable
         _notifyIcon = new NotifyIcon
         {
             Icon = _appIcon,
-            Text = "StrikeEQ — Equalizador Gamer",
+            Text = "FootStep EQ — Equalizador Gamer",
             Visible = true,
             ContextMenuStrip = _menu
         };
@@ -44,7 +44,7 @@ public sealed class TrayIconService : IDisposable
     {
         _menu.Items.Clear();
 
-        var openItem = new ToolStripMenuItem("Abrir StrikeEQ") { Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+        var openItem = new ToolStripMenuItem("Abrir FootStep EQ") { Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
         openItem.Click += (_, _) => RestoreRequested?.Invoke();
         _menu.Items.Add(openItem);
         _menu.Items.Add(new ToolStripSeparator());
@@ -71,12 +71,12 @@ public sealed class TrayIconService : IDisposable
 
         _menu.Items.Add(new ToolStripSeparator());
 
-        var exitItem = new ToolStripMenuItem("Sair do StrikeEQ");
+        var exitItem = new ToolStripMenuItem("Sair do FootStep EQ");
         exitItem.Click += (_, _) => ExitRequested?.Invoke();
         _menu.Items.Add(exitItem);
 
-        string activeName = profiles.FirstOrDefault(p => p.Id == activeProfileId)?.Name ?? "StrikeEQ";
-        string tooltip = $"StrikeEQ • {(bypassed ? "DESLIGADO" : activeName)}";
+        string activeName = profiles.FirstOrDefault(p => p.Id == activeProfileId)?.Name ?? "FootStep EQ";
+        string tooltip = $"FootStep EQ • {(bypassed ? "DESLIGADO" : activeName)}";
         _notifyIcon.Text = tooltip.Length > 63 ? tooltip[..63] : tooltip;
     }
 

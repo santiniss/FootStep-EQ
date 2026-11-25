@@ -16,7 +16,7 @@ namespace StrikeEQ.Audio;
 public sealed class NativeApoInstallerService
 {
     public const string StrikeEqApoClsid = "{7A94E2C1-5F83-4D62-9B18-3C4A7E2D8F01}";
-    public const string DllFileName = "StrikeEQ.Apo.dll";
+    public const string DllFileName = "FootStepEQ.Apo.dll";
 
     // Windows MMDevice FxProperties property keys
     private const string PKEY_FX_Association              = "{d04e05a6-594b-4fb6-a80d-01af5eed7d1d},0";

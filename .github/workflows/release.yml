@@ -1,4 +1,4 @@
-name: Build & Release StrikeEQ
+name: Build & Release FootStep EQ
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Compile Native C++ APO DLL (StrikeEQ.Apo.dll)
+      - name: Compile Native C++ APO DLL (FootStepEQ.Apo.dll)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path publish | Out-Null
@@ -29,10 +29,10 @@ jobs:
             -DUNICODE -D_UNICODE `
             native/StrikeEQ.Apo/StrikeEqApo.cpp `
             native/StrikeEQ.Apo/StrikeEQ.Apo.def `
-            -o publish/StrikeEQ.Apo.dll `
+            -o publish/FootStepEQ.Apo.dll `
             -lole32 -ladvapi32 -luuid
 
-      - name: Build & Publish Single-File StrikeEQ.exe
+      - name: Build & Publish Single-File FootStepEQ.exe
         shell: pwsh
         run: |
           dotnet build StrikeEQ.sln -c Release
@@ -46,20 +46,20 @@ jobs:
 
       - name: Package Portable Release ZIP
         shell: pwsh
-        run: Compress-Archive -Path publish/StrikeEQ.exe,publish/StrikeEQ.Apo.dll,README.md -DestinationPath StrikeEQ-win-x64.zip -Force
+        run: Compress-Archive -Path publish/FootStepEQ.exe,publish/FootStepEQ.Apo.dll,README.md -DestinationPath FootStepEQ-win-x64.zip -Force
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: StrikeEQ-win-x64
-          path: StrikeEQ-win-x64.zip
+          name: FootStepEQ-win-x64
+          path: FootStepEQ-win-x64.zip
 
       - name: Publish GitHub Release on Tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            StrikeEQ-win-x64.zip
-            publish/StrikeEQ.exe
-            publish/StrikeEQ.Apo.dll
+            FootStepEQ-win-x64.zip
+            publish/FootStepEQ.exe
+            publish/FootStepEQ.Apo.dll
           generate_release_notes: true

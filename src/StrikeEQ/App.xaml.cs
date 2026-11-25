@@ -67,8 +67,8 @@ public partial class App : System.Windows.Application
         {
             LogCrash("Startup Exception", ex);
             System.Windows.MessageBox.Show(
-                $"Falha ao iniciar o StrikeEQ:\n\n{ex.Message}",
-                "StrikeEQ — Erro de Inicialização",
+                $"Falha ao iniciar o FootStep EQ:\n\n{ex.Message}",
+                "FootStep EQ — Erro de Inicialização",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);
@@ -79,8 +79,8 @@ public partial class App : System.Windows.Application
     {
         LogCrash("UI Exception", e.Exception);
         System.Windows.MessageBox.Show(
-            $"Erro inesperado no StrikeEQ:\n\n{e.Exception.Message}\n\nDetalhes salvos em crash.log.",
-            "StrikeEQ — Erro",
+            $"Erro inesperado no FootStep EQ:\n\n{e.Exception.Message}\n\nDetalhes salvos em crash.log.",
+            "FootStep EQ — Erro",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
         e.Handled = true;
