@@ -24,8 +24,11 @@ public sealed class NativeApoInstallerService
     private const string PKEY_FX_EndpointEffectClsid      = "{d04e05a6-594b-4fb6-a80d-01af5eed7d1d},7";
     private const string PKEY_EFX_ProcessingModes         = "{d3993a3f-99c2-4402-b5ec-a92a0367664b},7";
     private const string PKEY_AudioEndpoint_Disable_SysFx = "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5";
-    private const string AUDIO_SIGNALPROCESSINGMODE_DEFAULT = "{C18E2F7E-933D-4965-B7D1-1EEF228D2AF3}";
-    private const string KSNODETYPE_ANY                   = "{00000000-0000-0000-0000-000000000000}";
+    private const string AUDIO_SIGNALPROCESSINGMODE_DEFAULT        = "{C18E2F7E-933D-4965-B7D1-1EEF228D2AF3}";
+    private const string AUDIO_SIGNALPROCESSINGMODE_MEDIA          = "{4780004E-7133-41D8-8C74-660DADD2C0EE}";
+    private const string AUDIO_SIGNALPROCESSINGMODE_MOVIE          = "{B26FEB0D-EC94-477C-9494-D1AB8E753F6E}";
+    private const string AUDIO_SIGNALPROCESSINGMODE_COMMUNICATIONS = "{98951333-B9CD-48B1-A0A3-FF40682D73F7}";
+    private const string KSNODETYPE_ANY                            = "{00000000-0000-0000-0000-000000000000}";
 
     public static string InstalledDllPath =>
         Path.Combine(NativeApoSharedMemory.SharedDirectory, DllFileName);
@@ -76,9 +79,10 @@ public sealed class NativeApoInstallerService
     {
         try
         {
-            using var key = Registry.ClassesRoot.OpenSubKey($@"CLSID\{StrikeEqApoClsid}\InprocServer32");
-            string? path = key?.GetValue(null) as string;
-            return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+            using var clsidKey = Registry.ClassesRoot.OpenSubKey($@"CLSID\{StrikeEqApoClsid}\InprocServer32");
+            string? path = clsidKey?.GetValue(null) as string;
+            using var apoKey = Registry.ClassesRoot.OpenSubKey($@"AudioEngine\AudioProcessingObjects\{StrikeEqApoClsid}");
+            return !string.IsNullOrWhiteSpace(path) && File.Exists(path) && apoKey is not null;
         }
         catch
         {
@@ -98,6 +102,7 @@ public sealed class NativeApoInstallerService
 
     public static bool IsInstalledOnEndpoint(string? deviceId)
     {
+        if (!IsComRegistered()) return false;
         string? guid = ExtractEndpointGuid(deviceId);
         if (string.IsNullOrWhiteSpace(guid)) return false;
 
@@ -275,7 +280,13 @@ public sealed class NativeApoInstallerService
                     fxKey.SetValue(PKEY_FX_Association, KSNODETYPE_ANY, RegistryValueKind.String);
 
                 fxKey.SetValue(PKEY_FX_EndpointEffectClsid, StrikeEqApoClsid, RegistryValueKind.String);
-                fxKey.SetValue(PKEY_EFX_ProcessingModes, new[] { AUDIO_SIGNALPROCESSINGMODE_DEFAULT }, RegistryValueKind.MultiString);
+                fxKey.SetValue(PKEY_EFX_ProcessingModes, new[]
+                {
+                    AUDIO_SIGNALPROCESSINGMODE_DEFAULT,
+                    AUDIO_SIGNALPROCESSINGMODE_MEDIA,
+                    AUDIO_SIGNALPROCESSINGMODE_MOVIE,
+                    AUDIO_SIGNALPROCESSINGMODE_COMMUNICATIONS
+                }, RegistryValueKind.MultiString);
                 fxKey.SetValue(PKEY_AudioEndpoint_Disable_SysFx, 0, RegistryValueKind.DWord);
             }
 
@@ -396,6 +407,11 @@ public sealed class NativeApoInstallerService
         sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null), FileSystemRights.Modify, flags, PropagationFlags.None, AccessControlType.Allow));
         sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null), FileSystemRights.Modify, flags, PropagationFlags.None, AccessControlType.Allow));
         sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), FileSystemRights.FullControl, flags, PropagationFlags.None, AccessControlType.Allow));
+        try
+        {
+            sec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier("S-1-15-2-1"), FileSystemRights.ReadAndExecute, flags, PropagationFlags.None, AccessControlType.Allow));
+        }
+        catch { }
         info.SetAccessControl(sec);
     }
 

@@ -2,6 +2,8 @@
 #include "StrikeEqApoDsp.h"
 
 #include <atomic>
+#include <cstdarg>
+#include <cstdio>
 #include <cstring>
 #include <cwchar>
 #include <new>
@@ -10,6 +12,38 @@ namespace {
 
 HMODULE g_hModule = nullptr;
 std::atomic<LONG> g_dllRefCount{0};
+
+// Lightweight lifecycle-only diagnostic log (NEVER called inside real-time APOProcess)
+void DiagLog(const char* fmt, ...) noexcept {
+    HANDLE h = CreateFileW(
+        L"C:\\ProgramData\\FootStepEQ\\apo_diag.log",
+        FILE_APPEND_DATA,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        nullptr,
+        OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr);
+    if (h == INVALID_HANDLE_VALUE) return;
+
+    SYSTEMTIME st{};
+    GetLocalTime(&st);
+    char buf[512];
+    int n = std::snprintf(buf, sizeof(buf), "[%02u:%02u:%02u.%03u] [PID=%lu] ",
+        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentProcessId());
+    if (n > 0 && n < static_cast<int>(sizeof(buf)) - 4) {
+        va_list args;
+        va_start(args, fmt);
+        int m = std::vsnprintf(buf + n, sizeof(buf) - n - 2, fmt, args);
+        va_end(args);
+        if (m > 0) n += m;
+        if (n > static_cast<int>(sizeof(buf)) - 3) n = static_cast<int>(sizeof(buf)) - 3;
+        buf[n++] = '\r';
+        buf[n++] = '\n';
+        DWORD written = 0;
+        WriteFile(h, buf, static_cast<DWORD>(n), &written, nullptr);
+    }
+    CloseHandle(h);
+}
 
 bool IsIeeeFloatFormat(const WAVEFORMATEX* wfx) noexcept {
     if (!wfx) return false;
@@ -126,7 +160,8 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE Initialize(UINT32 /*cbDataSize*/, BYTE* /*pbyData*/) override {
+    HRESULT STDMETHODCALLTYPE Initialize(UINT32 cbDataSize, BYTE* /*pbyData*/) override {
+        DiagLog("Initialize(cbDataSize=%u)", cbDataSize);
         _initialized = true;
         OpenSharedMemory();
         SyncSharedParameters(true);
@@ -138,11 +173,21 @@ public:
         IAudioMediaType* pRequestedInputFormat,
         IAudioMediaType** ppSupportedInputFormat) override
     {
-        if (!pRequestedInputFormat || !ppSupportedInputFormat) return E_POINTER;
-        *ppSupportedInputFormat = nullptr;
+        if (!pRequestedInputFormat) return E_POINTER;
+        if (ppSupportedInputFormat) *ppSupportedInputFormat = nullptr;
 
         const WAVEFORMATEX* reqWfx = pRequestedInputFormat->GetAudioFormat();
-        if (!IsIeeeFloatFormat(reqWfx)) {
+        if (!reqWfx) {
+            DiagLog("IsInputFormatSupported: reqWfx=NULL");
+            return APOERR_FORMAT_NOT_SUPPORTED;
+        }
+
+        bool reqFloat = IsIeeeFloatFormat(reqWfx);
+        DiagLog("IsInputFormatSupported: req tag=0x%X ch=%u rate=%u bits=%u float=%d opp=%p outPtr=%p",
+            reqWfx->wFormatTag, reqWfx->nChannels, reqWfx->nSamplesPerSec, reqWfx->wBitsPerSample,
+            reqFloat ? 1 : 0, pOppositeFormat, ppSupportedInputFormat);
+
+        if (!reqFloat) {
             return APOERR_FORMAT_NOT_SUPPORTED;
         }
 
@@ -151,12 +196,16 @@ public:
             if (!oppWfx || oppWfx->nChannels != reqWfx->nChannels ||
                 oppWfx->nSamplesPerSec != reqWfx->nSamplesPerSec ||
                 oppWfx->wBitsPerSample != reqWfx->wBitsPerSample) {
+                DiagLog("IsInputFormatSupported: opposite mismatch opp=(ch=%u rate=%u bits=%u)",
+                    oppWfx ? oppWfx->nChannels : 0, oppWfx ? oppWfx->nSamplesPerSec : 0, oppWfx ? oppWfx->wBitsPerSample : 0);
                 return APOERR_FORMAT_NOT_SUPPORTED;
             }
         }
 
-        *ppSupportedInputFormat = pRequestedInputFormat;
-        pRequestedInputFormat->AddRef();
+        if (ppSupportedInputFormat) {
+            *ppSupportedInputFormat = pRequestedInputFormat;
+            pRequestedInputFormat->AddRef();
+        }
         return S_OK;
     }
 
@@ -203,6 +252,7 @@ public:
         OpenSharedMemory();
         SyncSharedParameters(true);
 
+        DiagLog("LockForProcess OK: rate=%u ch=%u shm=%p", _sampleRate, _channels, _sharedState);
         _locked = true;
         return S_OK;
     }
@@ -455,6 +505,7 @@ extern "C" HRESULT __stdcall DllCanUnloadNow() {
 }
 
 extern "C" HRESULT __stdcall DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv) {
+    DiagLog("DllGetClassObject called");
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
     if (!IsEqualCLSID(rclsid, CLSID_StrikeEqApo)) return CLASS_E_CLASSNOTAVAILABLE;
@@ -485,26 +536,27 @@ extern "C" HRESULT __stdcall DllRegisterServer() {
     hr = WriteRegString(HKEY_CLASSES_ROOT, inprocKey, L"ThreadingModel", L"Both");
     if (FAILED(hr)) return hr;
 
-    // 2. Register in Windows AudioEngine AudioProcessingObjects registry
+    // 2. Register in REAL Windows AudioEngine AudioProcessingObjects registry (HKCR\AudioEngine\AudioProcessingObjects)
     wchar_t apoKey[256];
-    swprintf_s(apoKey, 256, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio\\AudioEngine\\AudioProcessingObjects\\%s", STRIKEEQ_APO_CLSID_STR);
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"FriendlyName", L"FootStep EQ Audio APO");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"Copyright", L"FootStep EQ Gaming Audio");
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MajorVersion", 1);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MinorVersion", 0);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"Flags",
+    swprintf_s(apoKey, 256, L"AudioEngine\\AudioProcessingObjects\\%s", STRIKEEQ_APO_CLSID_STR);
+    hr = WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"FriendlyName", L"FootStep EQ Audio APO");
+    if (FAILED(hr)) return hr;
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"Copyright", L"FootStep EQ Gaming Audio");
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MajorVersion", 1);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MinorVersion", 0);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"Flags",
         APO_FLAG_INPLACE | APO_FLAG_SAMPLESPERFRAME_MUST_MATCH | APO_FLAG_FRAMESPERSECOND_MUST_MATCH | APO_FLAG_BITSPERSAMPLE_MUST_MATCH);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MinInputConnections", 1);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MaxInputConnections", 1);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MinOutputConnections", 1);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MaxOutputConnections", 1);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"MaxInstances", 0xFFFFFFFF);
-    WriteRegDword(HKEY_LOCAL_MACHINE, apoKey, L"NumAPOInterfaces", 5);
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"APOInterface0", L"{FD7F2B29-24D0-4B5C-B177-592C39F9CA10}");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"APOInterface1", L"{9E1D6A6D-DDBC-4E95-A4C7-AD64BA37846C}");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"APOInterface2", L"{0E5ED805-ABA6-49C3-8F9A-2B8C889C4FA8}");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"APOInterface3", L"{5FA00F27-ADD6-499A-8A9D-6B98521FA75B}");
-    WriteRegString(HKEY_LOCAL_MACHINE, apoKey, L"APOInterface4", L"{BAFE99D2-7436-44CE-9E0E-4D89AFBFFF56}");
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MinInputConnections", 1);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MaxInputConnections", 1);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MinOutputConnections", 1);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MaxOutputConnections", 1);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"MaxInstances", 0xFFFFFFFF);
+    WriteRegDword(HKEY_CLASSES_ROOT, apoKey, L"NumAPOInterfaces", 5);
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"APOInterface0", L"{FD7F2B29-24D0-4B5C-B177-592C39F9CA10}");
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"APOInterface1", L"{9E1D6A6D-DDBC-4E95-A4C7-AD64BA37846C}");
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"APOInterface2", L"{0E5ED805-ABA6-49C3-8F9A-2B8C889C4FA8}");
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"APOInterface3", L"{5FA00F27-ADD6-499A-8A9D-6B98521FA75B}");
+    WriteRegString(HKEY_CLASSES_ROOT, apoKey, L"APOInterface4", L"{BAFE99D2-7436-44CE-9E0E-4D89AFBFFF56}");
 
     return S_OK;
 }
@@ -515,8 +567,8 @@ extern "C" HRESULT __stdcall DllUnregisterServer() {
     RegDeleteTreeW(HKEY_CLASSES_ROOT, clsidKey);
 
     wchar_t apoKey[256];
-    swprintf_s(apoKey, 256, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Audio\\AudioEngine\\AudioProcessingObjects\\%s", STRIKEEQ_APO_CLSID_STR);
-    RegDeleteTreeW(HKEY_LOCAL_MACHINE, apoKey);
+    swprintf_s(apoKey, 256, L"AudioEngine\\AudioProcessingObjects\\%s", STRIKEEQ_APO_CLSID_STR);
+    RegDeleteTreeW(HKEY_CLASSES_ROOT, apoKey);
     return S_OK;
 }
 
