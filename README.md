@@ -24,3 +24,12 @@ Start-Process .\publish\FootStepEQ.exe
 # Executar a suíte de testes (DSP + COM APO nativo)
 dotnet run --project .\tests\StrikeEQ.Tests\StrikeEQ.Tests.csproj -c Release
 ```
+
+## Como Publicar uma Nova Atualização no GitHub (Auto-Updater)
+
+```powershell
+# Atualiza a versão, faz commit, cria a tag e dispara o GitHub Actions automaticamente:
+.\scripts\publish-release.ps1 -Version "1.0.3" -Message "feat: nova melhoria"
+```
+
+Em ~1 minuto o GitHub Actions publica a nova Release, e qualquer usuário com o **FootStep EQ** aberto pode ir em **Saída de Áudio → Verificar Atualizações** para baixar, substituir o executável e reabrir automaticamente na nova versão.

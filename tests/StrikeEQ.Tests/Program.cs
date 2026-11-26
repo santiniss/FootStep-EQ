@@ -286,6 +286,15 @@ RunTest("FootStepEQ.Apo.dll is embedded inside FootStepEQ assembly", () =>
     AssertTrue(NativeApoInstallerService.IsDllAvailable(), "IsDllAvailable() returned false");
 });
 
+// 12. GitHub Auto-Updater Version Comparison
+RunTest("GitHubUpdateService version comparison detects newer releases accurately", () =>
+{
+    AssertTrue(GitHubUpdateService.IsNewerVersion("1.0.2", "1.0.1"), "1.0.2 should be newer than 1.0.1");
+    AssertTrue(GitHubUpdateService.IsNewerVersion("1.1.0", "1.0.9"), "1.1.0 should be newer than 1.0.9");
+    AssertTrue(!GitHubUpdateService.IsNewerVersion("1.0.2", "1.0.2"), "Equal versions should not be newer");
+    AssertTrue(!GitHubUpdateService.IsNewerVersion("1.0.0", "1.0.2"), "Older version should not be newer");
+});
+
 Console.WriteLine();
 Console.WriteLine($"Summary: {passed} passed, {failed} failed.");
 return failed == 0 ? 0 : 1;

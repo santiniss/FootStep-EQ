@@ -727,13 +727,48 @@ public partial class MainWindow : Window
     private async void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
     {
         BtnCheckUpdates.IsEnabled = false;
-        TxtUpdateStatus.Text = "Consultando GitHub Releases...";
+        UpdateProgressTrack.Visibility = Visibility.Collapsed;
+        TxtUpdateStatus.Text = "Verificando novas versões no GitHub...";
         try
         {
             var res = await _updateService.CheckForUpdatesAsync();
             TxtUpdateStatus.Text = res.Message;
 
-            if (res.UpdateAvailable && !string.IsNullOrWhiteSpace(res.ReleaseUrl))
+            if (!res.UpdateAvailable) return;
+
+            if (!string.IsNullOrWhiteSpace(res.DirectExeDownloadUrl))
+            {
+                var confirm = System.Windows.MessageBox.Show(
+                    $"{res.Message}\n\nDeseja baixar e atualizar o FootStep EQ automaticamente agora?\n(O programa vai fechar e reabrir já na v{res.LatestVersion}.)",
+                    "Atualização Disponível — FootStep EQ",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (confirm != MessageBoxResult.Yes) return;
+
+                UpdateProgressTrack.Visibility = Visibility.Visible;
+                UpdateProgressFill.Width = 0;
+
+                var progress = new Progress<double>(pct =>
+                {
+                    TxtUpdateStatus.Text = $"Baixando v{res.LatestVersion}... {pct:0}%";
+                    double maxW = Math.Max(40, UpdateProgressTrack.ActualWidth - 2);
+                    UpdateProgressFill.Width = Math.Clamp(pct / 100.0, 0, 1) * maxW;
+                });
+
+                var (ok, dlMsg) = await _updateService.DownloadAndApplyUpdateAsync(
+                    res.DirectExeDownloadUrl, res.LatestVersion, progress);
+
+                TxtUpdateStatus.Text = dlMsg;
+                if (ok)
+                {
+                    ExitApplication();
+                    return;
+                }
+
+                System.Windows.MessageBox.Show(dlMsg, "FootStep EQ — Atualização", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else if (!string.IsNullOrWhiteSpace(res.ReleaseUrl))
             {
                 var open = System.Windows.MessageBox.Show(
                     $"{res.Message}\n\nDeseja abrir a página de download no GitHub agora?",

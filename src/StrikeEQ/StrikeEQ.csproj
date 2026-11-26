@@ -10,7 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>FootStepEQ</AssemblyName>
     <RootNamespace>StrikeEQ</RootNamespace>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Product>FootStep EQ — Equalizador Gamer</Product>
   </PropertyGroup>
 
