@@ -608,10 +608,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (NativeApoInstallerService.LocateSourceDll() is null)
+        if (!NativeApoInstallerService.IsDllAvailable())
         {
             System.Windows.MessageBox.Show(
-                "O arquivo FootStepEQ.Apo.dll não foi encontrado na pasta do FootStep EQ.\nMantenha os dois arquivos juntos na mesma pasta.",
+                "O motor de áudio (FootStepEQ.Apo.dll) não foi encontrado.",
                 "FootStep EQ",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);

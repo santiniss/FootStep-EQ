@@ -279,6 +279,13 @@ RunTest("Native FootStepEQ.Apo.dll loads, creates COM APO, and matches C# DSP pa
     }
 });
 
+// 11. Embedded APO DLL Verification (Single-File Self-Contained)
+RunTest("FootStepEQ.Apo.dll is embedded inside FootStepEQ assembly", () =>
+{
+    AssertTrue(NativeApoInstallerService.HasEmbeddedDll(), "FootStepEQ.Apo.dll manifest resource missing from FootStepEQ assembly!");
+    AssertTrue(NativeApoInstallerService.IsDllAvailable(), "IsDllAvailable() returned false");
+});
+
 Console.WriteLine();
 Console.WriteLine($"Summary: {passed} passed, {failed} failed.");
 return failed == 0 ? 0 : 1;

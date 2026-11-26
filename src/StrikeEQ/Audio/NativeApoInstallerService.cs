@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -29,6 +30,11 @@ public sealed class NativeApoInstallerService
     public static string InstalledDllPath =>
         Path.Combine(NativeApoSharedMemory.SharedDirectory, DllFileName);
 
+    public static bool HasEmbeddedDll() =>
+        Assembly.GetExecutingAssembly().GetManifestResourceInfo(DllFileName) is not null;
+
+    public static bool IsDllAvailable() => HasEmbeddedDll() || LocateSourceDll() is not null;
+
     public static string? LocateSourceDll()
     {
         string[] candidates =
@@ -44,6 +50,26 @@ public sealed class NativeApoInstallerService
             if (File.Exists(full)) return full;
         }
         return null;
+    }
+
+    private static bool ExtractOrCopyDllTo(string destinationPath)
+    {
+        // Prefer embedded DLL inside FootStepEQ.exe so it's always the exact matching version
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(DllFileName);
+        if (stream is not null)
+        {
+            using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            stream.CopyTo(fs);
+            return true;
+        }
+
+        string? external = LocateSourceDll();
+        if (external is null) return false;
+        if (string.Equals(Path.GetFullPath(external), Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        File.Copy(external, destinationPath, overwrite: true);
+        return true;
     }
 
     public static bool IsComRegistered()
@@ -175,26 +201,29 @@ public sealed class NativeApoInstallerService
             return false;
         }
 
-        string? sourceDll = LocateSourceDll();
-        if (sourceDll is null)
+        if (!IsDllAvailable())
         {
-            message = $"Arquivo {DllFileName} não encontrado ao lado do StrikeEQ.exe.";
+            message = $"Arquivo {DllFileName} não encontrado (nem embutido nem na pasta do FootStep EQ).";
             return false;
         }
 
         try
         {
-            // 1. Prepare C:\ProgramData\StrikeEQ with Users + LOCAL SERVICE access
+            // 1. Prepare C:\ProgramData\FootStepEQ with Users + LOCAL SERVICE access
             Directory.CreateDirectory(NativeApoSharedMemory.SharedDirectory);
             GrantDirectoryPermissions(NativeApoSharedMemory.SharedDirectory);
 
-            // Copy StrikeEQ.Apo.dll (stop AudioSrv first if locked by previous version)
-            bool dllCopied = TryCopyDll(sourceDll, InstalledDllPath);
-            if (!dllCopied)
+            // Extract embedded FootStepEQ.Apo.dll (stop AudioSrv first if locked by previous version)
+            bool dllWritten = TryWriteDll(InstalledDllPath);
+            if (!dllWritten)
             {
                 RestartAudioService(stopOnly: true);
                 Thread.Sleep(600);
-                File.Copy(sourceDll, InstalledDllPath, overwrite: true);
+                if (!ExtractOrCopyDllTo(InstalledDllPath))
+                {
+                    message = $"Falha ao extrair {DllFileName} para {InstalledDllPath}.";
+                    return false;
+                }
             }
 
             // Initialize shared state file if needed so audiodg.exe finds it immediately
@@ -301,14 +330,11 @@ public sealed class NativeApoInstallerService
         }
     }
 
-    private static bool TryCopyDll(string src, string dst)
+    private static bool TryWriteDll(string dst)
     {
         try
         {
-            if (string.Equals(Path.GetFullPath(src), Path.GetFullPath(dst), StringComparison.OrdinalIgnoreCase))
-                return true;
-            File.Copy(src, dst, overwrite: true);
-            return true;
+            return ExtractOrCopyDllTo(dst);
         }
         catch
         {
